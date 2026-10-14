@@ -1,4 +1,8 @@
-streamlit
+fastapi
+uvicorn
 finance-datareader
 pandas
-plotly
+anthropic
+openai
+requests
+lxml

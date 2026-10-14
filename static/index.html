@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>종목 검색기</title>
+<style>
+:root{--ink:#111;--paper:#fff;--bg:#e6e6e6;--gold:#f5c518;--olive:#8a8f2a;--rose:#cf707b;--up:#c00018;--sage:#a9b88a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:var(--ink)}
+.app{max-width:1100px;margin:16px auto;background:var(--paper);border:4px solid #000}
+header{background:#000;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+header h1{margin:0;font-size:28px}header small{color:var(--gold);letter-spacing:2px;margin-left:10px;font-weight:700}
+.chip{background:var(--gold);color:#000;padding:2px 8px;margin-left:4px;font-size:12px;font-weight:700}
+.chip.off{background:#555;color:#aaa}
+nav{display:flex;border-bottom:3px solid #000}
+nav button{flex:1;padding:14px;font-size:16px;font-weight:700;border:0;background:#fff;cursor:pointer}
+nav button.on{background:#000;color:#fff}
+.pane{display:none;padding:16px}.pane.on{display:block}
+.band{padding:14px 18px;color:#fff;font-size:26px;font-weight:700;margin-bottom:14px}
+.olive{background:var(--olive)}.rose{background:var(--rose)}
+.box{border:1px solid #000;padding:14px}
+.sliders{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 20px}
+.sliders label{font-size:14px;display:block}.sliders b{color:var(--up)}
+.sliders input[type=range]{width:100%;accent-color:#000}
+.go{display:block;width:100%;margin-top:14px;padding:14px;background:#000;color:#fff;font-size:16px;font-weight:700;border:0;cursor:pointer}
+.go:hover{background:var(--up)}.go:disabled{background:#888;cursor:not-allowed}
+.prog{height:14px;border:1px solid #000;margin-top:14px;display:none}.prog i{display:block;height:100%;background:var(--up);width:0}
+.pmsg{font-size:13px;margin-top:4px;min-height:18px}
+.tag{display:inline-block;border:1px solid #000;padding:4px 10px;font-size:13px;margin:12px 0}
+.theme{border:1px solid #000;margin:14px 0}
+.theme .t{display:flex;justify-content:space-between;padding:8px 12px;font-weight:700;gap:8px;flex-wrap:wrap}
+.theme .t span:last-child{font-size:13px}
+.trig{background:var(--sage);padding:8px 12px;font-size:14px;border-top:1px solid #000;border-bottom:1px solid #000}
+.trig.hot{background:var(--rose)}
+.row{display:flex;gap:12px;padding:8px 12px;border-top:1px solid #ddd;font-size:14px;align-items:baseline}
+.row .n{width:180px;font-weight:700;flex:none}.row .n small{font-weight:400;color:#555}
+.row .p{width:72px;color:var(--up);font-weight:700;flex:none}.row .v{width:64px;flex:none}.row .r{flex:1;color:#333}
+.sub{background:#000;color:#fff;padding:3px 12px;font-size:12px;font-weight:700}
+.ben{background:repeating-linear-gradient(135deg,#f4f4f4,#f4f4f4 6px,#ececec 6px,#ececec 12px)}
+textarea{width:100%;height:100px;padding:10px;font-size:16px;border:2px solid #000;font-family:inherit}
+.rep{border:1px solid #000;margin-top:16px;padding:0 0 12px}
+.rep h2{margin:0;padding:12px 16px;font-size:24px}
+.rep .meta{background:#9ab6c9;padding:6px 16px;font-size:13px}
+.sec{border-bottom:2px solid #000;font-weight:700;font-size:17px;margin:18px 16px 6px;padding-bottom:2px}
+.rep ul{margin:6px 16px 6px 36px;padding:0;line-height:1.7}
+.rep p{margin:6px 16px;line-height:1.6}
+.view{margin:10px 16px 0;padding:10px 12px;background:#9ab6c9;font-weight:700}
+.view.mid{background:#7b97ac}
+.badge{display:inline-block;padding:4px 16px;font-weight:700;border:1px solid #000;margin:8px 16px 2px}
+.b-즉시매수{background:#e63946;color:#fff}.b-분할매수{background:var(--gold)}.b-관망{background:#e59866}.b-패스{background:#bbb}
+.note{font-size:13px;color:#a00;margin:8px 0}.foot{padding:10px 16px;font-size:12px;color:#555;border-top:1px solid #ccc}
+@media(max-width:760px){.sliders{grid-template-columns:1fr 1fr}.row{flex-wrap:wrap}.row .n{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1 style="display:inline">종목 검색기</h1><small>THEME SCANNER · ANALYST</small></div>
+  <div id="chips"></div>
+</header>
+<nav>
+  <button class="on" data-pane="p1">STEP 1 · 수급 테마 검색</button>
+  <button data-pane="p2">STEP 2 · 종목 분석</button>
+</nav>
+
+<section class="pane on" id="p1">
+  <div class="band olive">수급 테마 검색</div>
+  <div class="box">
+    <div class="sliders">
+      <label>5일 누적 하한 <b id="v_ret5">15</b>%<input type="range" id="ret5" min="0" max="100" value="15"></label>
+      <label>거래량 배수 <b id="v_volx">2.0</b>x<input type="range" id="volx" min="1" max="10" step="0.5" value="2"></label>
+      <label>상승일 하한 <b id="v_up">3</b>일<input type="range" id="up" min="0" max="5" value="3"></label>
+      <label>시총 하한 <b id="v_cap">1000</b>억<input type="range" id="cap" min="0" max="10000" step="100" value="1000"></label>
+      <label>분석 종목수 <b id="v_n">1200</b><input type="range" id="n" min="100" max="2500" step="100" value="1200"></label>
+      <label style="align-self:end"><input type="checkbox" id="force"> 캐시 무시(강제 재스캔)</label>
+    </div>
+    <button class="go" id="scanBtn">검색</button>
+    <div class="prog" id="prog"><i></i></div>
+    <div class="pmsg" id="pmsg"></div>
+  </div>
+  <div id="themes"></div>
+</section>
+
+<section class="pane" id="p2">
+  <div class="band rose">종목 분석</div>
+  <textarea id="q" placeholder="종목명 또는 코드 (줄바꿈으로 여러 개)  예) SK이노베이션"></textarea>
+  <button class="go" id="anaBtn" style="width:auto;padding:12px 28px;background:var(--up)">분석하기</button>
+  <div class="pmsg" id="amsg"></div>
+  <div id="reports"></div>
+</section>
+<div class="foot">본 프로그램은 투자 참고용 도구이며, 모든 투자의 책임은 투자자 본인에게 있습니다.</div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n, d = 0) => n == null ? "확인 불가" : Number(n).toLocaleString("ko-KR", {maximumFractionDigits: d});
+const signed = n => (n >= 0 ? "+" : "") + fmt(n);
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button,.pane").forEach(e => e.classList.remove("on"));
+  b.classList.add("on"); $("#" + b.dataset.pane).classList.add("on");
+});
+[["ret5","v_ret5"],["volx","v_volx"],["up","v_up"],["cap","v_cap"],["n","v_n"]].forEach(([i, o]) => {
+  const el = $("#" + i), out = $("#" + o);
+  const show = () => out.textContent = i === "volx" ? Number(el.value).toFixed(1) : el.value;
+  el.oninput = show;
+});
+
+async function api(url, opt) {
+  const r = await fetch(url, opt);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+  return r.json();
+}
+
+api("/api/status").then(s => {
+  $("#chips").innerHTML = ["KRX 시세", "네이버 증권"].map(t => `<span class="chip">${t}</span>`).join("")
+    + `<span class="chip ${s.dart ? "" : "off"}">DART</span>`
+    + `<span class="chip ${s.provider ? "" : "off"}">${s.provider ? s.provider.toUpperCase() : "AI 키 없음"}</span>`;
+});
+
+function renderThemes(job) {
+  let h = `<div class="tag">후보 ${job.candidates}개 · 테마 ${job.themes.length}개</div>`;
+  if (job.llm_error) h += `<div class="note">AI 호출 실패로 규칙 기반으로 표시합니다: ${esc(job.llm_error)}</div>`;
+  if (!job.themes.length) h += `<p>조건을 만족하는 종목이 없습니다. 하한 값을 낮춰 보세요.</p>`;
+  for (const t of job.themes) {
+    const rows = t.stocks.map(s => `<div class="row"><span class="n">${esc(s.name)} <small>${s.market}</small></span>
+      <span class="p">${s.ret5 >= 0 ? "+" : ""}${s.ret5}%</span><span class="v">x${s.volx}</span>
+      <span class="v">${s.new_high ? "⭐신고가" : ""}</span><span class="r">${esc(s.role)} ${esc(s.reason)}</span></div>`).join("");
+    const bens = t.beneficiaries.map(b => `<div class="row ben"><span class="n">${esc(b.name)} <small>${b.code} · ${b.market}</small></span>
+      <span class="r">수혜주 ${esc(b.reason)}</span></div>`).join("");
+    h += `<div class="theme"><div class="t"><span>[${esc(t.name)}]</span>
+      <span>5일 평균 ${t.ret5 >= 0 ? "+" : ""}${t.ret5}% · 급등 ${t.stocks.length}</span></div>
+      <div class="trig ${t.ret5 >= 25 ? "hot" : ""}">거시 트리거: ${esc(t.trigger)}</div>${rows}
+      ${bens ? `<div class="sub">대장주·수혜주</div>${bens}` : ""}</div>`;
+  }
+  $("#themes").innerHTML = h;
+}
+
+$("#scanBtn").onclick = async () => {
+  const btn = $("#scanBtn"); btn.disabled = true; $("#themes").innerHTML = "";
+  $("#prog").style.display = "block";
+  try {
+    const { job } = await api("/api/scan", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({min_ret5: +$("#ret5").value, min_volx: +$("#volx").value, min_up_days: +$("#up").value,
+        min_marcap_eok: +$("#cap").value, n_stocks: +$("#n").value, force: $("#force").checked}),
+    });
+    for (;;) {
+      const j = await api("/api/scan/" + job);
+      $("#prog i").style.width = Math.round(j.progress * 100) + "%";
+      $("#pmsg").textContent = `${j.message} (${Math.round(j.progress * 100)}%)`;
+      if (j.status === "done") { renderThemes(j); break; }
+      if (j.status === "error") { $("#pmsg").textContent = "오류: " + j.message; break; }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  } catch (e) { $("#pmsg").textContent = "오류: " + e.message; }
+  btn.disabled = false;
+};
+
+function list(items) { return `<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`; }
+function verdict(label, cls, j) {
+  return `<div class="view ${cls}">${label}</div><span class="badge b-${esc(j.verdict)}">${esc(j.verdict)}</span>
+    ${list(j.reasons || [])}${j.scenario ? `<p><b>예상 시나리오</b>: ${esc(j.scenario)}</p>` : ""}`;
+}
+function renderReport({facts: f, analysis: a, llm_error}) {
+  const fin = f.finance, fl = f.flow, ch = f.chart, info = f.info;
+  const side = v => v > 0 ? "매수 우위" : "매도 우위";
+  const eok = v => v == null ? "확인 불가" : fmt(v) + "억원";
+  const disc = f.disclosures == null ? ["최근 3개월 주요 공시: 확인 불가 (DART_API_KEY 필요)"]
+    : f.disclosures.length ? ["최근 3개월 주요 공시:", ...f.disclosures.slice(0, 6)] : ["최근 3개월 주요 공시: 없음"];
+  return `<div class="rep"><h2>${esc(f.name)}</h2>
+    <div class="meta">${f.code} · ${f.market} · 리포트 날짜 ${f.date} · 엔진 ${esc(a.engine)}</div>
+    ${llm_error ? `<div class="note" style="margin:6px 16px">AI 호출 실패 → 규칙 기반: ${esc(llm_error)}</div>` : ""}
+    <div class="sec">1단계. 종목 기본 정보</div>
+    ${list([`시가총액: ${info.marketValue ?? "확인 불가"}`, `업종: ${f.industry}`,
+      `매출액: ${eok(fin["매출액"])} (${fin.period ?? ""})`, `영업이익: ${eok(fin["영업이익"])}`,
+      `당기순이익: ${eok(fin["당기순이익"])}`, `부채비율: ${fin["부채비율"] ?? "확인 불가"}%`])}
+    <p><b>한 줄 해석</b>: ${esc(a.basic)}</p>
+    <div class="sec">2단계. 최근 공시 및 재료 분석</div>
+    ${list([...disc, "시장에 영향을 준 뉴스:", ...f.news.slice(0, 6)])}
+    <p><b>한 줄 해석</b>: ${esc(a.material)}</p>
+    <div class="sec">3단계. 엮인 테마 및 동종업계 흐름</div><p>${esc(a.theme)}</p>
+    <div class="sec">4단계. 외국인·기관 수급</div>
+    ${list([`최근 ${fl.days}거래일 외국인 순매수: ${signed(fl.foreign)}주 (${side(fl.foreign)})`,
+      `최근 ${fl.days}거래일 기관 순매수: ${signed(fl.organ)}주 (${side(fl.organ)})`,
+      `외국인 지분율: ${fl.foreign_ratio_old ?? "-"}% → ${fl.foreign_ratio_now ?? "-"}%`])}
+    <p><b>한 줄 해석</b>: ${esc(a.flow)}</p>
+    <div class="sec">5단계. 차트상 현재 위치</div>
+    ${ch ? list([`현재가: ${fmt(ch.price)}원`, `52주 최고/최저: ${fmt(ch.hi52)} / ${fmt(ch.lo52)}원 (고점 대비 ${ch.from_hi_pct.toFixed(1)}%)`,
+      `거래량: 20일 평균 대비 ${ch.volx.toFixed(1)}배`, `60일 추세: ${ch.trend60.toFixed(1)}% / RSI ${ch.rsi.toFixed(0)}`,
+      `이동평균 배열: ${ch.aligned ? "정배열" : ch.reverse ? "역배열" : "혼조"}`,
+      `최근 16일 박스권 폭: ${ch.box_width_pct.toFixed(1)}%`]) : "<p>차트 데이터 확인 불가</p>"}
+    <p><b>한 줄 해석</b>: ${esc(a.chart)}</p>
+    <div class="sec">6단계. 리스크 요인</div>${list(a.risks || [])}
+    <div class="sec">7단계. 최종 판단</div>
+    ${verdict("단기·스윙 관점 (향후 1~4주)", "", a.short)}
+    ${verdict("중장기 관점 (향후 3~12개월)", "mid", a.mid)}
+    <p><b>종합 결론</b>: ${esc(a.conclusion)}</p></div>`;
+}
+
+$("#anaBtn").onclick = async () => {
+  const names = $("#q").value.split("\n").map(s => s.trim()).filter(Boolean);
+  if (!names.length) return;
+  const btn = $("#anaBtn"); btn.disabled = true; $("#reports").innerHTML = "";
+  for (const [i, name] of names.entries()) {
+    $("#amsg").textContent = `${name} 분석 중... (${i + 1}/${names.length})`;
+    try {
+      const res = await api("/api/analyze", {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({query: name})});
+      $("#reports").insertAdjacentHTML("beforeend", renderReport(res));
+    } catch (e) {
+      $("#reports").insertAdjacentHTML("beforeend", `<div class="note">${esc(name)}: ${esc(e.message)}</div>`);
+    }
+  }
+  $("#amsg").textContent = "완료"; btn.disabled = false;
+};
+</script>
+</body>
+</html>
